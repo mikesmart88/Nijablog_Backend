@@ -42,7 +42,7 @@ class ArticleFile(models.Model):
     file_uuid = models.UUIDField(null=True, unique=True, blank=True)
 
     def __str__(self):
-        return 'post file'
+        return f'{self.type} ---file'
     
     def save(self, *args, **kwargs):
         defult_uuid = uuid.uuid4()
@@ -70,7 +70,7 @@ class Article(models.Model):
 
     ContentType = [
         ('Business', 'Business'),
-        ('Entertainments', 'Entertainment'),
+        ('Entertainments', 'Entertainments'),
         ('Sport', 'Sport'),
         ('Education', 'Education'),
         ('Social', 'Social'),
@@ -141,6 +141,77 @@ class Article(models.Model):
             pass
         return super(Article, self).save(*args, **kwargs)
     
-    
-        
 
+class ChannelContentType(models.Model):
+    name = models.CharField(max_length=500, null=False, unique=True)
+    slug = models.SlugField(null=True, blank=True, unique=True)
+
+    def __str__(self):
+        return f'{self.name} --ChannelType'
+    
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        return super(Tag, self).save(*args, **kwargs)
+
+class Channel(models.Model):
+    title = models.CharField(null=False, max_length=200)
+    description = models.TextField(null=False)
+    content = models.TextField(null=False)
+    content_type = models.ForeignKey(ChannelContentType, on_delete=models.PROTECT)
+    tags = models.ManyToManyField(Tag, related_name='ChannelPostTags')
+    author = models.ForeignKey(User, on_delete=models.PROTECT, related_name='ChannelPostAuthor', null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    post_uuid = models.UUIDField(null=True, unique=True, blank=True)
+    post_files = models.ManyToManyField(ArticleFile, related_name='ChannelPostFiloes')
+    views = models.BigIntegerField(default=0)
+    is_edited = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} ---ChannelPost"
+    
+    def save(self, *args, **kwargs):
+        if self.is_edited == False:
+            self.post_uuid = uuid.uuid4()
+            self.is_edited = True
+        else:
+            pass
+        return super(Article, self).save(*args, **kwargs)
+    
+
+class BuzzFeed(models.Model):
+
+    BuzzType = [
+        ('Movie', 'Movie'),
+        ('Music', 'Music'),
+    ]
+
+    title = models.CharField(null=False, max_length=200)
+    description = models.TextField(null=False)
+    Buzz_type = models.CharField(null=True, max_length=100, choices=BuzzType)
+    tags = models.ManyToManyField(Tag, related_name='BuzzPostTags')
+    author = models.ForeignKey(User, on_delete=models.PROTECT, related_name='BuzzAuthor', null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    post_uuid = models.UUIDField(null=True, unique=True, blank=True)
+    cover_image = models.ForeignKey(ArticleFile, on_delete=models.PROTECT, related_name='BuzzCoverImage')
+    vedio_file = models.ForeignKey(ArticleFile, on_delete=models.PROTECT, related_name='BuzzCovervedio')
+    views = models.BigIntegerField(default=0)
+    is_edited = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=False)
+    relatet_name = models.CharField(null=True, blank=True, max_length=1000)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} ---Movie" if self.Buzz_type == 'Movie' else f"{self.title} ---Music"
+    
+    def save(self, *args, **kwargs):
+        if self.is_edited == False:
+            self.post_uuid = uuid.uuid4()
+            self.is_edited = True
+        else:
+            pass
+        return super(Article, self).save(*args, **kwargs)
